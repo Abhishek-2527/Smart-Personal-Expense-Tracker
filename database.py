@@ -9,9 +9,9 @@ def get_connection():
 
 def create_database():
     connection = get_connection()
-
     cursor = connection.cursor()
 
+    # Expenses table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS expenses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,5 +23,24 @@ def create_database():
         )
     """)
 
+    # Settings table for monthly budget
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY,
+            monthly_budget REAL NOT NULL DEFAULT 0
+        )
+    """)
+
+    # Create default budget setting
+    cursor.execute("""
+        INSERT OR IGNORE INTO settings (id, monthly_budget)
+        VALUES (1, 0)
+    """)
+
     connection.commit()
     connection.close()
+
+
+if __name__ == "__main__":
+    create_database()
+    print("Database created successfully!")

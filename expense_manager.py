@@ -1,12 +1,12 @@
-import sqlite3
 import csv
-
 from database import get_connection
 
 
+# =========================
+# ADD EXPENSE
+# =========================
 def add_expense(title, amount, category, date, description):
     connection = get_connection()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -18,12 +18,12 @@ def add_expense(title, amount, category, date, description):
     connection.commit()
     connection.close()
 
-    print("\nExpense added successfully!")
 
-
+# =========================
+# GET ALL EXPENSES
+# =========================
 def get_all_expenses():
     connection = get_connection()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -39,40 +39,16 @@ def get_all_expenses():
     return expenses
 
 
-def display_expenses(expenses):
-    if not expenses:
-        print("\nNo expenses found.")
-        return
-
-    print("\n" + "=" * 90)
-    print(
-        f"{'ID':<5}"
-        f"{'Title':<20}"
-        f"{'Amount':<12}"
-        f"{'Category':<15}"
-        f"{'Date':<15}"
-        f"{'Description':<20}"
-    )
-    print("=" * 90)
-
-    for expense in expenses:
-        expense_id, title, amount, category, date, description = expense
-
-        print(
-            f"{expense_id:<5}"
-            f"{title[:18]:<20}"
-            f"₹{amount:<11.2f}"
-            f"{category[:13]:<15}"
-            f"{date:<15}"
-            f"{(description or '')[:18]:<20}"
-        )
-
-    print("=" * 90)
+# Keep your old function name working too
+def get_expenses():
+    return get_all_expenses()
 
 
+# =========================
+# UPDATE EXPENSE
+# =========================
 def update_expense(expense_id, title, amount, category, date, description):
     connection = get_connection()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -83,39 +59,40 @@ def update_expense(expense_id, title, amount, category, date, description):
             date = ?,
             description = ?
         WHERE id = ?
-    """, (title, amount, category, date, description, expense_id))
+    """, (
+        title,
+        amount,
+        category,
+        date,
+        description,
+        expense_id
+    ))
 
     connection.commit()
-
-    updated = cursor.rowcount
-
     connection.close()
 
-    return updated
 
-
+# =========================
+# DELETE EXPENSE
+# =========================
 def delete_expense(expense_id):
     connection = get_connection()
-
     cursor = connection.cursor()
 
-    cursor.execute(
-        "DELETE FROM expenses WHERE id = ?",
-        (expense_id,)
-    )
+    cursor.execute("""
+        DELETE FROM expenses
+        WHERE id = ?
+    """, (expense_id,))
 
     connection.commit()
-
-    deleted = cursor.rowcount
-
     connection.close()
 
-    return deleted
 
-
+# =========================
+# SEARCH EXPENSES
+# =========================
 def search_expenses(keyword):
     connection = get_connection()
-
     cursor = connection.cursor()
 
     search_value = f"%{keyword}%"
@@ -126,9 +103,12 @@ def search_expenses(keyword):
         WHERE title LIKE ?
            OR category LIKE ?
            OR description LIKE ?
-           OR date LIKE ?
         ORDER BY date DESC
-    """, (search_value, search_value, search_value, search_value))
+    """, (
+        search_value,
+        search_value,
+        search_value
+    ))
 
     expenses = cursor.fetchall()
 
@@ -137,9 +117,11 @@ def search_expenses(keyword):
     return expenses
 
 
+# =========================
+# TOTAL EXPENSE
+# =========================
 def get_total_expenses():
     connection = get_connection()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -154,52 +136,11 @@ def get_total_expenses():
     return total
 
 
-def get_category_summary():
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute("""
-        SELECT category, SUM(amount), COUNT(*)
-        FROM expenses
-        GROUP BY category
-        ORDER BY SUM(amount) DESC
-    """)
-
-    summary = cursor.fetchall()
-
-    connection.close()
-
-    return summary
-
-
-def get_monthly_summary():
-    connection = get_connection()
-
-    cursor = connection.cursor()
-
-    cursor.execute("""
-        SELECT substr(date, 1, 7) AS month,
-               SUM(amount),
-               COUNT(*)
-        FROM expenses
-        GROUP BY month
-        ORDER BY month DESC
-    """)
-
-    summary = cursor.fetchall()
-
-    connection.close()
-
-    return summary
-
-
+# =========================
+# EXPORT CSV
+# =========================
 def export_to_csv(filename="expenses_export.csv"):
     expenses = get_all_expenses()
-
-    if not expenses:
-        print("\nNo expenses available for export.")
-        return
 
     with open(filename, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
@@ -215,4 +156,150 @@ def export_to_csv(filename="expenses_export.csv"):
 
         writer.writerows(expenses)
 
-    print(f"\nExpenses exported successfully to {filename}")
+    return filename
+
+
+# =========================
+# MONTHLY EXPENSE
+# =========================
+def get_monthly_expense(month):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT COALESCE(SUM(amount), 0)
+        FROM expenses
+        WHERE substr(date, 1, 7) = ?
+    """, (month,))
+
+    total = cursor.fetchone()[0]
+
+    connection.close()
+
+    return total
+
+
+# =========================
+# MONTHLY EXPENSE COUNT
+# =========================
+def get_monthly_expense_count(month):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM expenses
+        WHERE substr(date, 1, 7) = ?
+    """, (month,))
+
+    count = cursor.fetchone()[0]
+
+    connection.close()
+
+    return count
+
+
+# =========================
+# SET MONTHLY BUDGET
+# =========================
+def set_monthly_budget(amount):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        UPDATE settings
+        SET monthly_budget = ?
+        WHERE id = 1
+    """, (amount,))
+
+    connection.commit()
+    connection.close()
+
+
+# =========================
+# GET MONTHLY BUDGET
+# =========================
+def get_monthly_budget():
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT monthly_budget
+        FROM settings
+        WHERE id = 1
+    """)
+
+    result = cursor.fetchone()
+
+    connection.close()
+
+    if result:
+        return result[0]
+
+    return 0
+
+
+# =========================
+# HIGHEST SPENDING CATEGORY
+# =========================
+def get_highest_category(month):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT category, SUM(amount)
+        FROM expenses
+        WHERE substr(date, 1, 7) = ?
+        GROUP BY category
+        ORDER BY SUM(amount) DESC
+        LIMIT 1
+    """, (month,))
+
+    result = cursor.fetchone()
+
+    connection.close()
+
+    return result
+
+
+# =========================
+# CATEGORY SUMMARY
+# =========================
+def get_category_summary():
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT category, SUM(amount)
+        FROM expenses
+        GROUP BY category
+        ORDER BY SUM(amount) DESC
+    """)
+
+    result = cursor.fetchall()
+
+    connection.close()
+
+    return result
+
+
+# =========================
+# MONTHLY SUMMARY
+# =========================
+def get_monthly_summary():
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT substr(date, 1, 7) AS month,
+               SUM(amount)
+        FROM expenses
+        GROUP BY month
+        ORDER BY month ASC
+    """)
+
+    result = cursor.fetchall()
+
+    connection.close()
+
+    return result
