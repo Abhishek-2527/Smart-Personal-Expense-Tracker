@@ -40,6 +40,41 @@ It was developed as a practical project to strengthen Python programming, databa
 
 ---
 
+## 💻 Application Type
+
+**Smart Personal Expense Tracker** is a **Python-based desktop application** built using **Tkinter** for the graphical user interface and **SQLite** for local data storage.
+
+The application runs locally on a user's computer and provides an easy-to-use interface for managing personal expenses.
+
+### 🖥️ Application Highlights
+
+* 🪟 Desktop-based graphical user interface
+* ➕ Add and manage expense records
+* ✏️ Update existing expenses
+* 🗑️ Delete expenses
+* 🔍 Search expense records
+* 💰 Calculate total expenses
+* 📊 View expense summaries
+* 📄 Export expense data to CSV
+* 💾 Store data locally using SQLite
+* ✅ Input validation for reliable data entry
+
+### ⚙️ Technology Stack
+
+**Python • Tkinter • SQLite • SQL • CSV**
+
+### ▶️ Running the Application
+
+This is a **desktop application** and is designed to run locally on Windows or other systems with Python and Tkinter support.
+
+```bash
+python gui.py
+```
+
+> **Note:** This project is a desktop application and is not deployed as a web application on Vercel. It requires a local Python environment to run the graphical interface.
+
+---
+
 ## 🛠️ Tech Stack
 
 <p align="center">
